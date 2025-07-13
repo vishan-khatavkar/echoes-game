@@ -167,7 +167,7 @@ if st.session_state.get("submit_triggered") and st.session_state.get("user_input
     placeholder="e.g. examine HUD, go east...",
     value=st.session_state.user_input,
     key="user_input"
-)
+    )
 
     game.history.append(f"You: {user_input}")
     response = game.prompt_llm(user_input)
