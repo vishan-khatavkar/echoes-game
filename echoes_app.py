@@ -106,9 +106,12 @@ if "username" not in st.session_state:
     st.stop()
 
 # === LOAD / INIT USER DATA ===
-if "row" not in st.session_state:
+
+if "game" not in st.session_state:
     user_data = load_user_data(st.session_state.username)
+    
     if user_data:
+        # Returning user
         st.session_state.row = user_data["row"]
         st.session_state.game = EchoesOfTheVoid(
             level=user_data["current_level"],
@@ -116,8 +119,10 @@ if "row" not in st.session_state:
             history=user_data["history"]
         )
     else:
+        # New user
         st.session_state.row = create_new_user(st.session_state.username)
         st.session_state.game = EchoesOfTheVoid()
+
 
 game = st.session_state.game
 
