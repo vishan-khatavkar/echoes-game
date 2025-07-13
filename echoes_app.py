@@ -35,7 +35,7 @@ auth = Authenticate(
     cookie_expiry_days=1
 )
 
-name, auth_status, username = auth.login("Login", "main")
+name, auth_status, username = auth.login("Login", location="main")
 
 # --- Handle login
 if auth_status is False:
