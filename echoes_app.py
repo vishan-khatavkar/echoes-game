@@ -70,23 +70,44 @@ def load_user_data(username):
     records = worksheet.get_all_records()
     for idx, row in enumerate(records):
         if row['username'] == username:
+            inventory = json.loads(row["inventory"]) if row["inventory"] else []
+            history = json.loads(row["history"]) if row["history"] else []
+
+            # Add INITIAL_STORY if history is empty
+            if not history:
+                history = [INITIAL_STORY]
+
             return {
                 "row": idx + 2,  # +2 because row 1 is headers
                 "current_level": int(row["current_level"]),
-                "inventory": json.loads(row["inventory"]) if row["inventory"] else [],
-                "history": json.loads(row["history"]) if row["history"] else []
+                "inventory": inventory,
+                "history": history
             }
     # If user doesn't exist
     return None
 
 def save_user_data(row, level, inventory, history):
-    worksheet.update(f"B{row}", [[level]])
-    worksheet.update(f"C{row}", [[json.dumps(inventory)]])
-    worksheet.update(f"D{row}", [[json.dumps(history)]])
+    try:
+        # Ensure row is an integer >= 2 (after header row)
+        if not isinstance(row, int) or row < 2:
+            st.error(f"Invalid row number: {row}")
+            return
 
+        sheet.update(f"B{row}", [[int(level)]])
+        sheet.update(f"C{row}", [[json.dumps(inventory)]])
+        sheet.update(f"D{row}", [[json.dumps(history)]])
+    except Exception as e:
+        st.error(f"Error saving user data: {e}")
+        
 def create_new_user(username):
-    worksheet.append_row([username, 1, "[]", "[]"])
-    return worksheet.row_count  # Last row number
+    # Write user to next available row
+    records = sheet.get_all_records()
+    row = len(records) + 2  # +2 for header row
+    sheet.update(f"A{row}", [[username]])
+    sheet.update(f"B{row}", [[1]])
+    sheet.update(f"C{row}", [[json.dumps([])]])
+    sheet.update(f"D{row}", [[json.dumps([INITIAL_STORY])]])
+    return row
 
 # =====================
 # MAIN APP
