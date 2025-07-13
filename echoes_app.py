@@ -12,11 +12,11 @@ SHEET_NAME = st.secrets["gspread"]["sheet_name"]
 # --- Setup Google Sheets client from secrets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["gspread"]["credentials_json"])
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-client = gspread.authorize(creds)
-worksheet = client.open("EchoesOfTheVoid").worksheet("EchoesOfTheVoid")
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(credentials)
 
-
+SHEET_ID = st.secrets["gspread"]["sheet_id"]
+worksheet = client.open_by_key(SHEET_ID).worksheet("EchoesOfTheVoid") 
 # --- User login ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
