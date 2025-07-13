@@ -136,8 +136,9 @@ user_input = st.text_input(
     placeholder="e.g. examine HUD, go east..."
 )
 
-if st.button("▶ Continue") and st.session_state.user_input.strip():
-    user_input = st.session_state.user_input  # Get input before resetting
+# When user types and presses Enter
+if "user_input" in st.session_state and st.session_state.user_input.strip():
+    user_input = st.session_state.user_input.strip()
 
     game.history.append(f"You: {user_input}")
     response = game.prompt_llm(user_input)
@@ -148,11 +149,11 @@ if st.button("▶ Continue") and st.session_state.user_input.strip():
         game.level += 1
         game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Save state
+    # Save updated state to Google Sheet
     save_user_data(st.session_state.row, game.level, game.inventory, game.history)
 
-    # Clear input
+    # Clear input field
     st.session_state.user_input = ""
 
-    # Rerun to reflect cleared input
+    # Rerun to show updates
     st.rerun()
