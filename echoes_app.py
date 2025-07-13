@@ -3,61 +3,87 @@ import gspread
 import json
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Echoes of the Void", layout="centered")
-st.title("🌌 Echoes of the Void")
+st.set_page_config(page_title="Echoes of the Void", page_icon="🌌")
 
-# Set scopes and load credentials from Streamlit secrets
+# --- Load credentials from secrets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["gspread"]["credentials_json"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(credentials)
 
-# Fallback: Use spreadsheet ID directly (your link provided)
-SPREADSHEET_ID = "1An5D_KHWenIR8vQTwqeHU7xnoSayu8Zh5EfZuxYG3Rc"
-WORKSHEET_NAME = "EchoesOfTheVoid"
+# --- Google Sheet Setup ---
+SHEET_ID = st.secrets["gspread"]["sheet_id"]
+worksheet = client.open_by_key(SHEET_ID).sheet1
 
-# Access worksheet safely
-try:
-    sheet = client.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
-    st.success("✅ Connected to Google Sheet successfully!")
-except Exception as e:
-    st.error("❌ Failed to connect to Google Sheet.")
-    st.exception(e)
+# --- Game Logic Functions ---
+def load_user_data(username):
+    records = worksheet.get_all_records()
+    for i, row in enumerate(records):
+        if row.get("username") == username:
+            return {
+                "row": i + 2,  # account for header row
+                "game_state": row.get("game_state", ""),
+                "progress": row.get("progress", "")
+            }
+    # If new user, append to sheet
+    new_row = [username, "", ""]
+    worksheet.append_row(new_row)
+    return {
+        "row": len(records) + 2,
+        "game_state": "",
+        "progress": ""
+    }
+
+def update_user_data(row_num, game_state, progress):
+    worksheet.update(f"B{row_num}", [[game_state]])
+    worksheet.update(f"C{row_num}", [[progress]])
+
+# --- UI: Username input and session setup ---
+if "username" not in st.session_state:
+    st.title("🌌 Echoes of the Void")
+    st.markdown("Enter your name to begin your journey into the unknown...")
+    username = st.text_input("Enter your name:")
+    if st.button("Start"):
+        if username.strip():
+            st.session_state.username = username.strip()
+            st.rerun()
+        else:
+            st.warning("Name cannot be empty.")
     st.stop()
 
-# User login simulation
-st.subheader("Login")
-username = st.text_input("Enter your name:")
-if username:
-    st.session_state.username = username
+# --- Load user data ---
+user_data = load_user_data(st.session_state.username)
+st.session_state.row_num = user_data["row"]
+st.session_state.game_state = user_data["game_state"]
+st.session_state.progress = user_data["progress"]
 
-    def load_user_data(username):
-        records = sheet.get_all_records()
-        for record in records:
-            if record.get("Username") == username:
-                return record
-        return None
+# --- Intro if new player ---
+if not st.session_state.game_state:
+    intro = (
+        f"Welcome, **{st.session_state.username}**.\n\n"
+        "You awaken in a dimly lit spacecraft. The hum of machinery vibrates through the walls.\n"
+        "A blinking console awaits your command.\n\n"
+        "*What will you do?*"
+    )
+    st.session_state.game_state = intro
+    st.session_state.progress = "intro"
+    update_user_data(st.session_state.row_num, st.session_state.game_state, st.session_state.progress)
+    st.rerun()
 
-    def save_user_data(username, data):
-        records = sheet.get_all_records()
-        for i, record in enumerate(records):
-            if record.get("Username") == username:
-                sheet.update_cell(i + 2, 2, data["progress"])
-                return
-        sheet.append_row([username, data["progress"]])
+# --- Game Display and Input ---
+st.markdown("#### 👁️ Current Scene")
+st.write(st.session_state.game_state)
 
-    # Load or initialize user
-    user_data = load_user_data(username)
-    if not user_data:
-        user_data = {"Username": username, "progress": "beginning"}
-        save_user_data(username, user_data)
+user_input = st.text_input(">> What do you do?", key="game_input")
 
-    st.session_state.user_data = user_data
+if st.button("Submit"):
+    if user_input.strip():
+        # Append input to story for now (later can replace with Groq logic)
+        new_state = st.session_state.game_state + "\n\n> " + user_input + "\nYou did something important..."
+        st.session_state.game_state = new_state
+        st.session_state.progress = "updated"
+        update_user_data(st.session_state.row_num, st.session_state.game_state, st.session_state.progress)
+        st.rerun()
+    else:
+        st.warning("Please type a command before submitting.")
 
-    # Game logic (simplified for demo)
-    st.write(f"🌟 Welcome, **{username}**")
-    st.write(f"📍 Current progress: `{user_data['progress']}`")
-    if st.button("Advance"):
-        user_data["progress"] = "next_stage"
-        save_user_data(username, user_data)
-        st.success("Progress saved!")
