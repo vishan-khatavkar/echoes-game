@@ -75,38 +75,20 @@ game = st.session_state.game
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# === Input Control Flags ===
-if "clear_input_box" not in st.session_state:
-    st.session_state.clear_input_box = False
+# === Input Box ===
+def submit_input():
+    st.session_state.submit_triggered = True
 
-if "input_submitted" not in st.session_state:
-    st.session_state.input_submitted = False
+user_input = st.text_input(
+    "What do you do next?",
+    placeholder="e.g. examine HUD, go east...",
+    key="user_input",
+    on_change=submit_input
+)
 
-input_container = st.empty()
-
-# Show input field with forced clear if needed
-if st.session_state.clear_input_box:
-    user_input = input_container.text_input(
-        "What do you do next?",
-        value="",
-        placeholder="e.g. examine HUD, go east..."
-    )
-else:
-    user_input = input_container.text_input(
-        "What do you do next?",
-        placeholder="e.g. examine HUD, go east..."
-    )
-
-# Handle new input
-if user_input and not st.session_state.input_submitted:
-    st.session_state.last_input = user_input
-    st.session_state.input_submitted = True
-    st.session_state.clear_input_box = True
-    st.rerun()
-
-# === Process submitted input ===
-if st.session_state.input_submitted and "last_input" in st.session_state:
-    user_input = st.session_state.last_input.strip()
+# === Process input after Enter is pressed ===
+if st.session_state.get("submit_triggered") and st.session_state.get("user_input"):
+    user_input = st.session_state.user_input.strip()
 
     if user_input:
         game.history.append(f"You: {user_input}")
@@ -116,8 +98,7 @@ if st.session_state.input_submitted and "last_input" in st.session_state:
             game.level += 1
             game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear flags and rerun
-    del st.session_state["last_input"]
-    st.session_state.input_submitted = False
-    st.session_state.clear_input_box = False
+    # Clear input and reset trigger
+    st.session_state.user_input = ""
+    st.session_state.submit_triggered = False
     st.rerun()
