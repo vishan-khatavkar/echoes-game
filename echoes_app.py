@@ -1,5 +1,20 @@
 import streamlit as st
 import requests
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Retrieve your GROQ API key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+# Example: use in request headers
+headers = {
+    "Authorization": f"Bearer {GROQ_API_KEY}",
+    "Content-Type": "application/json"
+}
+
 
 # ========== CONFIGURATION ==========
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
