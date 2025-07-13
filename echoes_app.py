@@ -136,23 +136,21 @@ user_input = st.text_input(
     key="user_input"
 )
 
-# If Enter pressed and input exists
 if user_input.strip():
-    user_input = user_input.strip()
+    # Copy and clear user input before rerun
+    user_action = user_input.strip()
+    st.session_state.user_input = ""  # Clear now — safe before rerun
 
-    game.history.append(f"You: {user_input}")
-    response = game.prompt_llm(user_input)
+    # Process input
+    game.history.append(f"You: {user_action}")
+    response = game.prompt_llm(user_action)
     game.history.append(f"{response}")
 
-    # Simple level-up every 6 messages
     if len(game.history) % 6 == 0:
         game.level += 1
         game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Save game state
+    # Save state
     save_user_data(st.session_state.row, game.level, game.inventory, game.history)
-
-    # Clear the input box indirectly
-    st.session_state.pop("user_input")  # 👈 safe way to clear the input
 
     st.rerun()
