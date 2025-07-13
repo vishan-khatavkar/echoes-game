@@ -14,7 +14,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds_dict = json.loads(st.secrets["gspread"]["credentials_json"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
-sheet = client.open(SHEET_NAME).sheet1
+worksheet = client.open("EchoesOfTheVoid").worksheet("EchoesOfTheVoid")
+
 
 # --- User login ---
 if "logged_in" not in st.session_state:
