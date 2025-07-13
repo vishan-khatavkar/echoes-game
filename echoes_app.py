@@ -41,8 +41,17 @@ if "row_num" not in st.session_state:
 
 # --- Login ---
 st.title("Echoes of the Void 🌌")
-if not st.session_state.username:
+if "login_submitted" not in st.session_state:
+    st.session_state.login_submitted = False
+
+if not st.session_state.login_submitted:
     st.session_state.username = st.text_input("Enter your username to begin:")
+    if st.button("Start Game"):
+        if st.session_state.username.strip():
+            st.session_state.login_submitted = True
+            st.rerun()
+        else:
+            st.warning("Please enter a valid username.")
     st.stop()
 
 # --- Load or Create User ---
