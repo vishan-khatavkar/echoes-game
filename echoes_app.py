@@ -92,20 +92,14 @@ def load_user_data(username):
             }
     # If user doesn't exist
     return None
-
 def save_user_data(row, level, inventory, history):
     try:
-        # Ensure row is an integer >= 2 (after header row)
-        if not isinstance(row, int) or row < 2:
-            st.error(f"Invalid row number: {row}")
-            return
-
-        sheet.update(f"B{row}", [[int(level)]])
-        sheet.update(f"C{row}", [[json.dumps(inventory)]])
-        sheet.update(f"D{row}", [[json.dumps(history)]])
+        worksheet.update(f"B{row}", [[level]])
+        worksheet.update(f"C{row}", [[json.dumps(inventory)]])
+        worksheet.update(f"D{row}", [[json.dumps(history)]])
     except Exception as e:
         st.error(f"Error saving user data: {e}")
-        
+       
 def create_new_user(username):
     # Write user to next available row
     records = sheet.get_all_records()
@@ -168,7 +162,13 @@ st.text_input(
 
 # === HANDLE SUBMISSION (via Enter) ===
 if st.session_state.get("submit_triggered") and st.session_state.get("user_input", "").strip():
-    user_input = st.session_state.user_input.strip()
+    user_input = st.text_input(
+    "What do you do next?",
+    placeholder="e.g. examine HUD, go east...",
+    value=st.session_state.user_input,
+    key="user_input"
+)
+
     game.history.append(f"You: {user_input}")
     response = game.prompt_llm(user_input)
     game.history.append(response)
@@ -182,6 +182,8 @@ if st.session_state.get("submit_triggered") and st.session_state.get("user_input
     save_user_data(st.session_state.row, game.level, game.inventory, game.history)
 
     # Clear input and flag before rerun
+ if "user_input" not in st.session_state:
     st.session_state.user_input = ""
+
     st.session_state.submit_triggered = False
     st.rerun()
