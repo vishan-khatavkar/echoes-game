@@ -75,20 +75,28 @@ game = st.session_state.game
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# === Input Box ===
-def submit_input():
-    st.session_state.submit_triggered = True
+# === Manage Input State ===
+if "input_submitted" not in st.session_state:
+    st.session_state.input_submitted = False
 
-user_input = st.text_input(
+if "last_input" not in st.session_state:
+    st.session_state.last_input = ""
+
+# === User Input Section ===
+def on_enter():
+    st.session_state.input_submitted = True
+    st.session_state.last_input = st.session_state.temp_input
+
+st.text_input(
     "What do you do next?",
+    key="temp_input",
     placeholder="e.g. examine HUD, go east...",
-    key="user_input",
-    on_change=submit_input
+    on_change=on_enter
 )
 
-# === Process input after Enter is pressed ===
-if st.session_state.get("submit_triggered") and st.session_state.get("user_input"):
-    user_input = st.session_state.user_input.strip()
+# === Process Input ===
+if st.session_state.input_submitted:
+    user_input = st.session_state.last_input.strip()
 
     if user_input:
         game.history.append(f"You: {user_input}")
@@ -98,7 +106,8 @@ if st.session_state.get("submit_triggered") and st.session_state.get("user_input
             game.level += 1
             game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear input and reset trigger
-    st.session_state.user_input = ""
-    st.session_state.submit_triggered = False
+    # Reset input state (CRUCIAL to break the loop)
+    st.session_state.input_submitted = False
+    st.session_state.last_input = ""
+    st.session_state.temp_input = ""  # resets input box!
     st.rerun()
