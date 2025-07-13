@@ -69,17 +69,27 @@ def get_user_row(username):
     return None
 
 
-
-
 def load_user_data(username):
     row = get_user_row(username)
     if row:
         data = worksheet.row_values(row)
         current_level = int(data[1]) if len(data) > 1 and data[1].isdigit() else 1
-        inventory = json.loads(data[2]) if len(data) > 2 and data[2] else []
-        history = json.loads(data[3]) if len(data) > 3 and data[3] else [
-            "You awaken in the smoking remains of your escape pod. The planet is unfamiliar — barren, stormy, but oddly structured. To the north, shattered ruins. To the east, a broken AI relay tower. Your suit HUD flickers."
-        ]
+
+        # Safely parse inventory
+        try:
+            inventory = json.loads(data[2]) if len(data) > 2 and data[2] else []
+        except json.JSONDecodeError:
+            inventory = []
+
+        # Safely parse history
+        try:
+            history = json.loads(data[3]) if len(data) > 3 and data[3] else [
+                "You awaken in the smoking remains of your escape pod. The planet is unfamiliar — barren, stormy, but oddly structured. To the north, shattered ruins. To the east, a broken AI relay tower. Your suit HUD flickers."
+            ]
+        except json.JSONDecodeError:
+            history = [
+                "You awaken in the smoking remains of your escape pod. The planet is unfamiliar — barren, stormy, but oddly structured. To the north, shattered ruins. To the east, a broken AI relay tower. Your suit HUD flickers."
+            ]
 
         return {
             "row": row,
@@ -88,8 +98,9 @@ def load_user_data(username):
             "inventory": inventory,
             "history": history
         }
+
     else:
-        # New user
+        # New user — create starting row
         starting_history = [
             "You awaken in the smoking remains of your escape pod. The planet is unfamiliar — barren, stormy, but oddly structured. To the north, shattered ruins. To the east, a broken AI relay tower. Your suit HUD flickers."
         ]
