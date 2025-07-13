@@ -130,9 +130,15 @@ for entry in game.history[-4:]:
     st.markdown(f"> {entry}")
 
 # ========== User Input ==========
-user_input = st.text_input("What do you do next?", placeholder="e.g. examine HUD, go east...")
+user_input = st.text_input(
+    "What do you do next?",
+    key="user_input",
+    placeholder="e.g. examine HUD, go east..."
+)
 
-if st.button("▶ Continue") and user_input.strip():
+if st.button("▶ Continue") and st.session_state.user_input.strip():
+    user_input = st.session_state.user_input  # Get input before resetting
+
     game.history.append(f"You: {user_input}")
     response = game.prompt_llm(user_input)
     game.history.append(f"{response}")
@@ -144,4 +150,9 @@ if st.button("▶ Continue") and user_input.strip():
 
     # Save state
     save_user_data(st.session_state.row, game.level, game.inventory, game.history)
+
+    # Clear input
+    st.session_state.user_input = ""
+
+    # Rerun to reflect cleared input
     st.rerun()
