@@ -75,28 +75,27 @@ game = st.session_state.game
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# === Manage Input State ===
-if "input_submitted" not in st.session_state:
-    st.session_state.input_submitted = False
+# === Handle Submission Flag ===
+if "submitted" not in st.session_state:
+    st.session_state.submitted = False
 
-if "last_input" not in st.session_state:
-    st.session_state.last_input = ""
+# === On input submit ===
+def handle_submit():
+    st.session_state.submitted = True
+    st.session_state.last_input = st.session_state.get("user_input", "")
 
-# === User Input Section ===
-def on_enter():
-    st.session_state.input_submitted = True
-    st.session_state.last_input = st.session_state.temp_input
+# === Input Box ===
+if not st.session_state.submitted:
+    st.text_input(
+        "What do you do next?",
+        key="user_input",
+        placeholder="e.g. examine HUD, go east...",
+        on_change=handle_submit
+    )
 
-st.text_input(
-    "What do you do next?",
-    key="temp_input",
-    placeholder="e.g. examine HUD, go east...",
-    on_change=on_enter
-)
-
-# === Process Input ===
-if st.session_state.input_submitted:
-    user_input = st.session_state.last_input.strip()
+# === Process After Submit ===
+if st.session_state.submitted:
+    user_input = st.session_state.get("last_input", "").strip()
 
     if user_input:
         game.history.append(f"You: {user_input}")
@@ -106,8 +105,9 @@ if st.session_state.input_submitted:
             game.level += 1
             game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Reset input state (CRUCIAL to break the loop)
-    st.session_state.input_submitted = False
+    # Reset all relevant session state
+    st.session_state.submitted = False
+    st.session_state.user_input = ""
     st.session_state.last_input = ""
-    st.session_state.temp_input = ""  # resets input box!
+
     st.rerun()
