@@ -87,4 +87,5 @@ if st.button("Send"):
             st.session_state.user_data["inventory"].append("Mystery Item")
 
         # Clear input
-        st.experimental_rerun()
+        st.rerun()
+
