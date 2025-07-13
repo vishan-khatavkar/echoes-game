@@ -22,7 +22,11 @@ class EchoesOfTheVoid:
         self.level = 1
         self.inventory = []
         self.history = [INITIAL_STORY]
-        self.objectives = ["Locate a power cell", "Stabilize your suit", "Understand the repeating transmission"]
+        self.objectives = [
+            "Locate a power cell",
+            "Stabilize your suit",
+            "Understand the repeating transmission"
+        ]
 
     def prompt_llm(self, user_input):
         context = f"""
@@ -45,7 +49,10 @@ Describe what happens next. Add choices, discoveries, or threats if relevant. Ad
         data = {
             "model": MODEL,
             "messages": [
-                {"role": "system", "content": "You are a sci-fi game engine narrating Echoes of the Void, a survival mystery game."},
+                {
+                    "role": "system",
+                    "content": "You are a sci-fi game engine narrating Echoes of the Void, a survival mystery game."
+                },
                 {"role": "user", "content": context}
             ]
         }
@@ -53,7 +60,7 @@ Describe what happens next. Add choices, discoveries, or threats if relevant. Ad
         res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
         return res.json()["choices"][0]["message"]["content"] if res.ok else f"⚠️ Error: {res.status_code}"
 
-# ============= GAME INSTANCE (in session) =============
+# ============= INIT GAME STATE =============
 if "game" not in st.session_state:
     st.session_state.game = EchoesOfTheVoid()
 
@@ -63,22 +70,24 @@ game = st.session_state.game
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# ============= INPUT FIELD =============
+# ============= TEXT INPUT FIELD =============
 user_input = st.text_input(
     "What do you do next?",
-    placeholder="e.g. examine HUD, go east...",
     key="user_input",
+    placeholder="e.g. examine HUD, go east...",
 )
 
-# ============= HANDLE TURN =============
+# ============= PROCESS INPUT =============
 if user_input.strip():
-    game.history.append(f"You: {user_input}")
-    response = game.prompt_llm(user_input)
+    game.history.append(f"You: {user_input.strip()}")
+    response = game.prompt_llm(user_input.strip())
     game.history.append(response)
 
+    # Auto-level up every 6 entries
     if len(game.history) % 6 == 0:
         game.level += 1
         game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    st.session_state.user_input = ""
+    # Clear input on next render by deleting session key
+    del st.session_state["user_input"]
     st.rerun()
