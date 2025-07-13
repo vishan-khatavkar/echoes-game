@@ -88,6 +88,8 @@ if user_input.strip():
         game.level += 1
         game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear input on next render by deleting session key
+    # ✅ Clear the input field
     del st.session_state["user_input"]
+
+    # 🔁 Trigger a fresh render
     st.rerun()
