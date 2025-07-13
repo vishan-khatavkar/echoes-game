@@ -17,22 +17,25 @@ worksheet = client.open_by_key(SHEET_ID).sheet1
 
 # --- Game Logic Functions ---
 def load_user_data(username):
-    records = worksheet.get_all_records()
-    for i, row in enumerate(records):
-        if row.get("username") == username:
-            return {
-                "row": i + 2,  # account for header row
-                "game_state": row.get("game_state", ""),
-                "progress": row.get("progress", "")
-            }
-    # If new user, append to sheet
-    new_row = [username, "", ""]
-    worksheet.append_row(new_row)
+    try:
+        records = worksheet.get_all_records()
+    except Exception as e:
+        st.error("Failed to read user data from Google Sheet.")
+        st.exception(e)
+        return None
+
+    for row in records:
+        if row["username"] == username:
+            return row
+
+    # New user
     return {
-        "row": len(records) + 2,
-        "game_state": "",
-        "progress": ""
+        "username": username,
+        "current_level": "start",
+        "inventory": "",
+        "history": ""
     }
+
 
 def update_user_data(row_num, game_state, progress):
     worksheet.update(f"B{row_num}", [[game_state]])
