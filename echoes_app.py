@@ -182,7 +182,7 @@ if st.session_state.get("submit_triggered") and st.session_state.get("user_input
     save_user_data(st.session_state.row, game.level, game.inventory, game.history)
 
     # Clear input and flag before rerun
- if "user_input" not in st.session_state:
+    if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 
     st.session_state.submit_triggered = False
