@@ -61,38 +61,37 @@ st.title("🌌 Echoes of the Void")
 
 # === Reset Game Button ===
 if st.button("🔄 Reset Game"):
-    for key in ["game", "user_input"]:
-        if key in st.session_state:
-            del st.session_state[key]
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
     st.rerun()
 
-# === Initialize Game ===
+# === Init Game Once ===
 if "game" not in st.session_state:
     st.session_state.game = EchoesOfTheVoid()
 
 game = st.session_state.game
 
-# === Display History ===
-for line in game.history[-6:]:
-    st.markdown(f"📝 {line}")
-
-# === Process Input & Clear Field ===
-if st.session_state.get("submit_triggered") and st.session_state.get("user_input", "").strip():
+# === Handle Submission First ===
+if st.session_state.get("submit_triggered") and "user_input" in st.session_state:
     user_input = st.session_state.user_input.strip()
-    game.history.append(f"You: {user_input}")
-    response = game.prompt_llm(user_input)
-    game.history.append(response)
+    if user_input:
+        game.history.append(f"You: {user_input}")
+        game.history.append(game.prompt_llm(user_input))
 
-    if len(game.history) % 6 == 0:
-        game.level += 1
-        game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
+        if len(game.history) % 6 == 0:
+            game.level += 1
+            game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear input safely
+    # Clear user input **before rerender**
     del st.session_state["user_input"]
     st.session_state.submit_triggered = False
     st.rerun()
 
-# === Text Input Box ===
+# === Show Game History ===
+for line in game.history[-6:]:
+    st.markdown(f"📝 {line}")
+
+# === Text Input Field ===
 st.text_input(
     "What do you do next?",
     placeholder="e.g. examine HUD, go east...",
