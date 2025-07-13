@@ -75,26 +75,37 @@ game = st.session_state.game
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# === Input Box with Manual Clear ===
+# === Input Control Flags ===
+if "clear_input_box" not in st.session_state:
+    st.session_state.clear_input_box = False
+
+if "input_submitted" not in st.session_state:
+    st.session_state.input_submitted = False
+
 input_container = st.empty()
 
-# Flag to control input visibility
-if "input_ready" not in st.session_state:
-    st.session_state.input_ready = True
-
-# Show input box only if ready for new command
-if st.session_state.input_ready:
+# Show input field with forced clear if needed
+if st.session_state.clear_input_box:
+    user_input = input_container.text_input(
+        "What do you do next?",
+        value="",
+        placeholder="e.g. examine HUD, go east..."
+    )
+else:
     user_input = input_container.text_input(
         "What do you do next?",
         placeholder="e.g. examine HUD, go east..."
     )
-    if user_input:
-        st.session_state.last_input = user_input
-        st.session_state.input_ready = False
-        st.rerun()
 
-# === Handle Submitted Input ===
-if not st.session_state.get("input_ready") and st.session_state.get("last_input"):
+# Handle new input
+if user_input and not st.session_state.input_submitted:
+    st.session_state.last_input = user_input
+    st.session_state.input_submitted = True
+    st.session_state.clear_input_box = True
+    st.rerun()
+
+# === Process submitted input ===
+if st.session_state.input_submitted and "last_input" in st.session_state:
     user_input = st.session_state.last_input.strip()
 
     if user_input:
@@ -105,7 +116,8 @@ if not st.session_state.get("input_ready") and st.session_state.get("last_input"
             game.level += 1
             game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear input state and prepare for next turn
+    # Clear flags and rerun
     del st.session_state["last_input"]
-    st.session_state.input_ready = True
+    st.session_state.input_submitted = False
+    st.session_state.clear_input_box = False
     st.rerun()
