@@ -1,14 +1,15 @@
 import streamlit as st
 import requests
 
-# ============= CONFIG =============
+# =====================
+# CONFIG
+# =====================
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-# ============= INITIAL SETUP =============
-st.set_page_config("🌌 Echoes of the Void", layout="centered")
-st.title("🌌 Echoes of the Void")
-
+# =====================
+# GAME LOGIC
+# =====================
 INITIAL_STORY = (
     "You awaken in the smoking remains of your escape pod. "
     "The planet is unfamiliar — barren, stormy, but oddly structured. "
@@ -16,17 +17,12 @@ INITIAL_STORY = (
     "Your suit HUD flickers."
 )
 
-# ============= GAME CLASS =============
 class EchoesOfTheVoid:
-    def __init__(self):
-        self.level = 1
-        self.inventory = []
-        self.history = [INITIAL_STORY]
-        self.objectives = [
-            "Locate a power cell",
-            "Stabilize your suit",
-            "Understand the repeating transmission"
-        ]
+    def __init__(self, level=1, inventory=None, history=None):
+        self.level = level
+        self.inventory = inventory if inventory else []
+        self.history = history if history else [INITIAL_STORY]
+        self.objectives = ["Locate a power cell", "Stabilize your suit", "Understand the repeating transmission"]
 
     def prompt_llm(self, user_input):
         context = f"""
@@ -49,10 +45,7 @@ Describe what happens next. Add choices, discoveries, or threats if relevant. Ad
         data = {
             "model": MODEL,
             "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a sci-fi game engine narrating Echoes of the Void, a survival mystery game."
-                },
+                {"role": "system", "content": "You are a sci-fi game engine narrating Echoes of the Void, a survival mystery game."},
                 {"role": "user", "content": context}
             ]
         }
@@ -60,36 +53,49 @@ Describe what happens next. Add choices, discoveries, or threats if relevant. Ad
         res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
         return res.json()["choices"][0]["message"]["content"] if res.ok else f"⚠️ Error: {res.status_code}"
 
-# ============= INIT GAME STATE =============
+# =====================
+# STREAMLIT APP
+# =====================
+st.set_page_config("Echoes of the Void", layout="centered")
+st.title("🌌 Echoes of the Void")
+
+# === Reset Game Button ===
+if st.button("🔄 Reset Game"):
+    for key in ["game", "user_input"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
+
+# === Initialize Game ===
 if "game" not in st.session_state:
     st.session_state.game = EchoesOfTheVoid()
 
 game = st.session_state.game
 
-# ============= DISPLAY HISTORY =============
+# === Display History ===
 for line in game.history[-6:]:
     st.markdown(f"📝 {line}")
 
-# ============= TEXT INPUT FIELD =============
-user_input = st.text_input(
-    "What do you do next?",
-    key="user_input",
-    placeholder="e.g. examine HUD, go east...",
-)
-
-# ============= PROCESS INPUT =============
-if user_input.strip():
-    game.history.append(f"You: {user_input.strip()}")
-    response = game.prompt_llm(user_input.strip())
+# === Process Input & Clear Field ===
+if st.session_state.get("submit_triggered") and st.session_state.get("user_input", "").strip():
+    user_input = st.session_state.user_input.strip()
+    game.history.append(f"You: {user_input}")
+    response = game.prompt_llm(user_input)
     game.history.append(response)
 
-    # Auto-level up every 6 entries
     if len(game.history) % 6 == 0:
         game.level += 1
         game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # ✅ Clear the input field
+    # Clear input safely
     del st.session_state["user_input"]
-
-    # 🔁 Trigger a fresh render
+    st.session_state.submit_triggered = False
     st.rerun()
+
+# === Text Input Box ===
+st.text_input(
+    "What do you do next?",
+    placeholder="e.g. examine HUD, go east...",
+    key="user_input",
+    on_change=lambda: st.session_state.update({"submit_triggered": True})
+)
