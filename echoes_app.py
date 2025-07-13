@@ -161,29 +161,31 @@ st.text_input(
 )
 
 # === HANDLE SUBMISSION (via Enter) ===
-if st.session_state.get("submit_triggered") and st.session_state.get("user_input", "").strip():
-    user_input = st.text_input(
+# Input box for gameplay (this goes before the logic so Enter works)
+user_input = st.text_input(
     "What do you do next?",
     placeholder="e.g. examine HUD, go east...",
-    value=st.session_state.user_input,
     key="user_input"
-    )
+)
 
-    game.history.append(f"You: {user_input}")
-    response = game.prompt_llm(user_input)
-    game.history.append(response)
+# Only run if user typed something and pressed Enter (or triggered submit)
+if st.session_state.get("submit_triggered") or (user_input and user_input.strip()):
+    user_input = st.session_state.get("user_input", "").strip()
 
-    # Auto-level up
-    if len(game.history) % 6 == 0:
-        game.level += 1
-        game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
+    if user_input:
+        game.history.append(f"You: {user_input}")
+        response = game.prompt_llm(user_input)
+        game.history.append(response)
 
-    # Save progress
-    save_user_data(st.session_state.row, game.level, game.inventory, game.history)
+        # Auto-level up every 6 lines
+        if len(game.history) % 6 == 0:
+            game.level += 1
+            game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear input and flag before rerun
-    if "user_input" not in st.session_state:
-    st.session_state.user_input = ""
+        # Save progress
+        save_user_data(st.session_state.row, game.level, game.inventory, game.history)
 
-    st.session_state.submit_triggered = False
-    st.rerun()
+        # Clear input and trigger
+        st.session_state.user_input = ""
+        st.session_state.submit_triggered = False
+        st.rerun()
