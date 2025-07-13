@@ -71,9 +71,32 @@ if "game" not in st.session_state:
 
 game = st.session_state.game
 
-# === Handle Submission First ===
-if st.session_state.get("submit_triggered") and "user_input" in st.session_state:
-    user_input = st.session_state.user_input.strip()
+# === Show Game History ===
+for line in game.history[-6:]:
+    st.markdown(f"📝 {line}")
+
+# === Input Box with Manual Clear ===
+input_container = st.empty()
+
+# Flag to control input visibility
+if "input_ready" not in st.session_state:
+    st.session_state.input_ready = True
+
+# Show input box only if ready for new command
+if st.session_state.input_ready:
+    user_input = input_container.text_input(
+        "What do you do next?",
+        placeholder="e.g. examine HUD, go east..."
+    )
+    if user_input:
+        st.session_state.last_input = user_input
+        st.session_state.input_ready = False
+        st.rerun()
+
+# === Handle Submitted Input ===
+if not st.session_state.get("input_ready") and st.session_state.get("last_input"):
+    user_input = st.session_state.last_input.strip()
+
     if user_input:
         game.history.append(f"You: {user_input}")
         game.history.append(game.prompt_llm(user_input))
@@ -82,19 +105,7 @@ if st.session_state.get("submit_triggered") and "user_input" in st.session_state
             game.level += 1
             game.history.append(f"🔺 You’ve advanced to Level {game.level}.")
 
-    # Clear user input **before rerender**
-    del st.session_state["user_input"]
-    st.session_state.submit_triggered = False
+    # Clear input state and prepare for next turn
+    del st.session_state["last_input"]
+    st.session_state.input_ready = True
     st.rerun()
-
-# === Show Game History ===
-for line in game.history[-6:]:
-    st.markdown(f"📝 {line}")
-
-# === Text Input Field ===
-st.text_input(
-    "What do you do next?",
-    placeholder="e.g. examine HUD, go east...",
-    key="user_input",
-    on_change=lambda: st.session_state.update({"submit_triggered": True})
-)
