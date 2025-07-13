@@ -7,7 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- Load Secrets ---
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
-SHEET_NAME = st.secrets["gspread"]["sheet_name"]
+
 
 # --- Setup Google Sheets client from secrets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
