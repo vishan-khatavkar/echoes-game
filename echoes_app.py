@@ -24,6 +24,13 @@ worksheet = client.open_by_key(sheet_id).sheet1
 # =====================
 # GAME LOGIC CLASS
 # =====================
+INITIAL_STORY = (
+    "You awaken in the smoking remains of your escape pod. "
+    "The planet is unfamiliar — barren, stormy, but oddly structured. "
+    "To the north, shattered ruins. To the east, a broken AI relay tower. "
+    "Your suit HUD flickers."
+)
+
 class EchoesOfTheVoid:
     def __init__(self, level=1, inventory=None, history=None):
         self.level = level
